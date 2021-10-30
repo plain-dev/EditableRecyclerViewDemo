@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/color_f3f3f3">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvList"
@@ -28,14 +30,20 @@
             android:id="@+id/checkAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select all" />
+            android:button="@drawable/selector_checkbox"
+            android:padding="@dimen/dp4"
+            android:text="@string/select_all"
+            android:textColor="@color/color_666666"
+            android:textSize="@dimen/dp12"
+            tools:ignore="SpUsage" />
 
         <TextView
             android:id="@+id/tvTotalCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/dp10"
-            android:text="0 items selected" />
+            android:textSize="@dimen/dp12"
+            tools:ignore="SpUsage" />
 
     </LinearLayout>
 

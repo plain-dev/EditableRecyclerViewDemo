@@ -12,7 +12,7 @@
         style="?attr/materialButtonOutlinedStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Group editing example"
+        android:text="@string/cart"
         android:textAllCaps="false" />
 
 </LinearLayout>

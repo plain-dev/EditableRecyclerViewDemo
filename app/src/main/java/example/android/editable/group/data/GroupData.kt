@@ -1,14 +1,19 @@
 package example.android.editable.group.data
 
+import androidx.annotation.DrawableRes
 import example.android.editable.base.SectionSelectEntity
 
 class GroupData : SectionSelectEntity() {
 
-    var parentTitle: String = ""
+    var storeName: String = ""
 
-    var name: String = ""
+    @DrawableRes
+    var productCover: Int = 0
+    var productName: String = ""
+    var productType: String = ""
+    var productPrice: String = ""
 
     override val isHeader: Boolean
-        get() = parentTitle.isNotEmpty()
+        get() = storeName.isNotEmpty()
 
 }

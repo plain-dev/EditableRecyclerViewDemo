@@ -1,3 +1,10 @@
 <resources>
-    <string name="app_name">EditableRecyclerViewDemo</string>
+    <string name="app_name">编辑列表案例</string>
+    <string name="select_all">全选</string>
+    <string name="items_selected">已选中 %1$s 项</string>
+    <string name="cart">购物车</string>
+    <string name="store_simple_name">Apple Store 官方</string>
+    <string name="product_simple_title">Apple/苹果 16英寸 MacBook Pro Apple M1 Pro 10/16 16GB 1TB</string>
+    <string name="product_simple_type">深空灰色;1TB 固态硬盘</string>
+    <string name="product_simple_price">￥20499</string>
 </resources>

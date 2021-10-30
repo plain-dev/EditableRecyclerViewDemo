@@ -205,8 +205,6 @@ abstract class BaseCardGroupQuickAdapter<T : GroupEntity, VH : BaseViewHolder> @
         }
         return if (currentItem.isHeader) {
             CARD_TYPE_HEADER
-        } else if ((preItem != null && preItem.isHeader) && ((nextItem != null && nextItem.isHeader) || position == data.size - 1)) {
-            CARD_TYPE_HEADER_AND_FOOTER
         } else if ((nextItem != null && nextItem.isHeader) || position == data.size - 1) {
             CARD_TYPE_FOOTER
         } else {

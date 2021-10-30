@@ -3,10 +3,17 @@
     <dimen name="cardView_radius">8dp</dimen>
     <dimen name="cardView_elevation">2dp</dimen>
     <dimen name="dp1">1dp</dimen>
+    <dimen name="dp2">2dp</dimen>
+    <dimen name="dp4">4dp</dimen>
     <dimen name="dp10">10dp</dimen>
     <dimen name="dp12">12dp</dimen>
     <dimen name="dp14">14dp</dimen>
     <dimen name="dp16">16dp</dimen>
     <dimen name="dp20">20dp</dimen>
+    <dimen name="dp25">25dp</dimen>
     <dimen name="dp50">50dp</dimen>
+    <dimen name="dp55">55dp</dimen>
+    <dimen name="dp60">60dp</dimen>
+    <dimen name="dp75">75dp</dimen>
+    <dimen name="dp126">126dp</dimen>
 </resources>

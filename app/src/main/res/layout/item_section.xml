@@ -13,21 +13,28 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/dp10">
 
-        <CheckBox
+        <androidx.appcompat.widget.AppCompatCheckBox
             android:id="@+id/check"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_width="@dimen/dp25"
+            android:layout_height="wrap_content"
+            android:button="@drawable/selector_checkbox" />
 
-        <TextView
-            android:id="@+id/tvSectionTitle"
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvStoreName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="这是一段标题"
+            android:layout_marginStart="@dimen/dp4"
+            android:drawableStart="@drawable/ic_storefront"
+            android:drawablePadding="@dimen/dp4"
+            android:gravity="center_vertical"
             android:textColor="@color/black"
             android:textSize="@dimen/dp16"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:ignore="SpUsage"
+            tools:text="@string/store_simple_name" />
 
     </LinearLayout>
 

@@ -11,50 +11,77 @@
     app:cardElevation="@dimen/cardView_elevation"
     app:cardPreventCornerOverlap="false">
 
-    <View
-        android:id="@+id/line"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/dp1"
-        android:layout_gravity="bottom"
-        android:background="@color/color_f3f3f3" />
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="@dimen/dp16">
-
-        <CheckBox
-            android:id="@+id/check"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <ImageView
-            android:layout_width="@dimen/dp50"
-            android:layout_height="@dimen/dp50"
-            android:src="@color/color_f3f3f3" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="@dimen/dp10">
 
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/dp10"
-            android:layout_weight="1"
-            android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvChildTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/black"
-                android:textSize="@dimen/dp14"
-                android:textStyle="bold" />
+            android:gravity="center_vertical"
+            tools:ignore="UselessParent">
 
-            <TextView
-                android:layout_width="match_parent"
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/check"
+                android:layout_width="@dimen/dp25"
                 android:layout_height="wrap_content"
-                android:text="This is a piece of content ...."
-                android:textColor="@color/color_333333" />
+                android:button="@drawable/selector_checkbox" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivCover"
+                android:layout_width="@dimen/dp75"
+                android:layout_height="@dimen/dp75"
+                android:layout_marginStart="@dimen/dp4"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_image"
+                tools:ignore="ContentDescription" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/dp10"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvProductName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/color_333333"
+                    android:textSize="@dimen/dp16"
+                    android:textStyle="bold"
+                    tools:ignore="SpUsage"
+                    tools:text="@string/product_simple_title" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvProductType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp12"
+                    android:background="@drawable/shape_cart_type_background"
+                    android:padding="@dimen/dp4"
+                    android:textColor="@color/color_666666"
+                    tools:text="@string/product_simple_type" />
+
+            </LinearLayout>
 
         </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvParentPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/dp126"
+            android:textColor="@color/color_e44921"
+            android:textSize="@dimen/dp20"
+            android:textStyle="bold"
+            tools:ignore="SpUsage"
+            tools:text="@string/product_simple_price" />
 
     </LinearLayout>
 

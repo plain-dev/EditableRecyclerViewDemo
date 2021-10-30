@@ -1,7 +1,10 @@
+@file:Suppress("SetTextI18n")
+
 package example.android.editable.group.adapter
 
 import android.view.View
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.TextView
 import com.google.android.material.card.MaterialCardView
 import example.android.editable.R
@@ -11,13 +14,14 @@ import example.android.editable.group.data.GroupData
 import example.android.editable.ktx.obtainDimension
 import example.android.editable.ktx.obtainDimensionPixelOffset
 
-class GroupSectionEditableAdapter(
-    // ignore
-) : BaseCardGroupQuickAdapter<GroupData, GroupSectionEditableViewHolder>(
-    R.layout.item_section, R.layout.item_child
-) {
+class GroupSectionEditableAdapter :
+    BaseCardGroupQuickAdapter<GroupData, GroupSectionEditableViewHolder>(
+        R.layout.item_section,
+        R.layout.item_child
+    ) {
 
-    val editModeHandle = object :BaseEditModeHandler<GroupData,GroupSectionEditableViewHolder>(this@GroupSectionEditableAdapter){
+    val editModeHandle = object :
+        BaseEditModeHandler<GroupData, GroupSectionEditableViewHolder>(this@GroupSectionEditableAdapter) {
 
         override fun getCheckBox(helper: GroupSectionEditableViewHolder): CheckBox? {
             return helper.getViewOrNull(R.id.check)
@@ -34,13 +38,16 @@ class GroupSectionEditableAdapter(
     override fun convert(helper: GroupSectionEditableViewHolder, item: GroupData) {
         super.convert(helper, item)
         editModeHandle.convert(helper, item)
-        helper.getViewOrNull<TextView>(R.id.tvChildTitle)?.text = item.name
+        helper.getViewOrNull<ImageView>(R.id.ivCover)?.setImageResource(item.productCover)
+        helper.getViewOrNull<TextView>(R.id.tvProductName)?.text = item.productName
+        helper.getViewOrNull<TextView>(R.id.tvProductType)?.text = item.productType
+        helper.getViewOrNull<TextView>(R.id.tvParentPrice)?.text = "￥${item.productPrice}"
     }
 
     override fun convertHeader(helper: GroupSectionEditableViewHolder, item: GroupData) {
         super.convertHeader(helper, item)
         editModeHandle.convert(helper, item)
-        helper.getViewOrNull<TextView>(R.id.tvSectionTitle)?.text = item.parentTitle
+        helper.getViewOrNull<TextView>(R.id.tvStoreName)?.text = item.storeName
     }
 
     override fun getMaterialCardView(holder: GroupSectionEditableViewHolder): MaterialCardView? {
