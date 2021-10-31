@@ -1,4 +1,4 @@
-@file:Suppress("NAME_SHADOWING", "UNCHECKED_CAST", "NotifyDataSetChanged")
+@file:Suppress("NAME_SHADOWING", "UNCHECKED_CAST", "NotifyDataSetChanged", "UNUSED")
 
 package example.android.editable.base.editmode
 
@@ -15,11 +15,61 @@ import example.android.editable.base.group.findHeaderItem
 import example.android.editable.ktx.findMethod
 import example.android.editable.ktx.swap
 
-abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>(val adapter: BaseQuickAdapter<T, VH>) {
+/**
+ * # 列表编辑模式处理器
+ *
+ * > 在 [BaseQuickAdapter] 及其子类中实例化此类，传入 [adapter] 对象
+ *
+ * ## 外部监听 & 联动
+ *
+ * - [editSelectedListener] 设置监听方法
+ * - [bindExternalCheckBox] 联动外部全选按钮
+ *
+ * ## 切换模式 [changeMode]
+ *
+ * > 仅在 [onlyEditMode] 设为 `false` 时有效
+ *
+ * - [EDIT_MODE] 编辑模式
+ * - [SHOW_MODE] 展示模式
+ *
+ * ## 获取视图
+ *
+ * - 获取复选按钮 [getCheckBox] 视图 (必须)
+ * - 获取隐藏区域 [getHideView] 视图 (可选，仅在 [onlyEditMode] 设为 `false` 时有效)
+ *
+ * ## 获取选择模式 [getSelectMode]
+ *
+ * - [SELECT_MODE_PARENT] 点击「整个条目」视图触发选择
+ * - [SELECT_MODE_CHILD] 点击「复选框」触发选择
+ *
+ * ## 获取选择类型 [getSelectType]
+ *
+ * - [SELECT_TYPE_MULTI] 多选
+ * - [SELECT_TYPE_SINGLE] 单选
+ *
+ * ## 通用配置项
+ *
+ * - [onlyEditMode] 是否永远处于编辑模式 (default: false)
+ * - [isRestoreUnselectedWhenChangeMode] 是否在 [changeMode] 时将所有「已选择项」置为「未选中」(default: true)
+ *
+ * ## 仅适用于单选配置项
+ *
+ * - [isSelectAlwaysTop] 选择项是否置顶 (default: true)
+ * - [isSelectLeastOne] 是否最少选择一项 (单选必须选中一项，default: true)
+ *
+ * ## 更新和修改列表数据需主动调用以下方法
+ *
+ * - [setList] 适配器重写 `setList` 方法，并调用此方法
+ * - [addData] 适配器重写 `addData` 方法，并调用此方法
+ * - [remove] 适配器重写 `remove` 方法，并调用此方法
+ * - [removeAt] 适配器重写 `removeAt` 方法，并调用此方法
+ *
+ */
+abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>(private val adapter: BaseQuickAdapter<T, VH>) {
 
     companion object {
 
-        private const val TAG = "EditModeAdapter"
+        private const val TAG = "EditModeHandler"
 
         const val SHOW_MODE = 0x101 // 展示模式
         const val EDIT_MODE = 0x202 // 编辑模式
@@ -57,7 +107,7 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
 
     private fun initialSelectedList(data: Collection<T>?) {
         selectedList.clear()
-        val data = data as Collection<Selected>
+        val data = data as Collection<SectionSelectEntity>
         val selected = data.filter { it.isSelected }
         if (isSingleSelectType) {
             val single = selected.getOrNull(0)
@@ -103,9 +153,10 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     abstract fun getCheckBox(helper: VH): CheckBox?
 
     /**
-     * 获取当切换显示模式[BaseQuickEditModeAdapter.SHOW_MODE]和
-     * 编辑模式[BaseQuickEditModeAdapter.EDIT_MODE]时, 需要隐藏的View,
-     * 一般为复选框
+     * 获取当切换显示模式 [SHOW_MODE]和 编辑模式 [EDIT_MODE] 时, 需要隐藏的View
+     *
+     * - 一般为复选框
+     * - 在设置 [onlyEditMode] 为 true 时无效
      */
     open fun getHideView(helper: VH): View? {
         return null
@@ -377,60 +428,77 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
      */
     private fun processSelected(t: T, isSelected: Boolean) {
         if (isSelected) {
-            // 如果点击的是父项
-            if (t.isHeader) {
-                val notifyPos = mutableListOf<Int>()
-                val unselectedChildList = adapter.data.filter {
-                    it != t && it.groupId == t.groupId && !it.isSelected
-                }
-                // 将未选中子项加入到选中列表
-                unselectedChildList.forEach { t ->
-                    notifyPos.add(adapter.data.indexOf(t))
-                    appendItemForSelectedList(t)
-                }
-                // 刷新UI
-                notifyPos.forEach { adapter.notifyItemChanged(it) }
-            } else {
-                // 寻找不是自己
-                // 不是头部
-                // 并且未选中的项
-                // 如果找不到，说明本组都选中了
-                val isGroupExistUnselected = adapter.data.any {
-                    it != t && !it.isHeader && it.groupId == t.groupId && !it.isSelected
-                }
-                if (!isGroupExistUnselected) {
-                    // 找到本组的头部
-                    val header = adapter.data.findHeaderItem(t)
-                    if (header != null) {
-                        appendItemForSelectedList(header)
-                        adapter.notifyItemChanged(adapter.data.indexOf(header))
-                    }
-                }
-            }
-
+            // 联动分组条目选中
+            linkageGroupItemSelected(t)
+            // 选择本条目
             appendItemForSelectedList(t)
         } else {
-            if (t.isHeader) {
-                val notifyPos = mutableListOf<Int>()
-                val selectedChildList = adapter.data.filter {
-                    it != t && it.groupId == t.groupId && it.isSelected
-                }
-                // 将选中子项加入到未选中列表
-                selectedChildList.forEach { t ->
-                    notifyPos.add(adapter.data.indexOf(t))
-                    removeItemForSelectedList(t)
-                }
-                // 刷新UI
-                notifyPos.forEach { adapter.notifyItemChanged(it) }
-            } else {
-                // 找到本组的头部，如果是选中，就置为未选中
+            // 联动分组条目未选中
+            linkageGroupItemUnselected(t)
+            // 取消选中本条目
+            removeItemForSelectedList(t)
+        }
+    }
+
+    /**
+     * 联动分组条目选中
+     */
+    private fun linkageGroupItemSelected(t: T) {
+        // 如果点击的是父项
+        if (t.isHeader) {
+            val notifyPos = mutableListOf<Int>()
+            val unselectedChildList = adapter.data.filter {
+                it != t && it.groupId == t.groupId && !it.isSelected
+            }
+            // 将未选中子项加入到选中列表
+            unselectedChildList.forEach { t ->
+                notifyPos.add(adapter.data.indexOf(t))
+                appendItemForSelectedList(t)
+            }
+            // 刷新UI
+            notifyPos.forEach { adapter.notifyItemChanged(it) }
+        } else {
+            // 寻找不是自己
+            // 不是头部
+            // 并且未选中的项
+            // 如果找不到，说明本组都选中了
+            val isGroupExistUnselected = adapter.data.any {
+                it != t && !it.isHeader && it.groupId == t.groupId && !it.isSelected
+            }
+            if (!isGroupExistUnselected) {
+                // 找到本组的头部
                 val header = adapter.data.findHeaderItem(t)
-                if (header != null && header.isSelected) {
-                    removeItemForSelectedList(header)
+                if (header != null) {
+                    appendItemForSelectedList(header)
                     adapter.notifyItemChanged(adapter.data.indexOf(header))
                 }
             }
-            removeItemForSelectedList(t)
+        }
+    }
+
+    /**
+     * 联动分组条目未选中
+     */
+    private fun linkageGroupItemUnselected(t: T) {
+        if (t.isHeader) {
+            val notifyPos = mutableListOf<Int>()
+            val selectedChildList = adapter.data.filter {
+                it != t && it.groupId == t.groupId && it.isSelected
+            }
+            // 将选中子项加入到未选中列表
+            selectedChildList.forEach { t ->
+                notifyPos.add(adapter.data.indexOf(t))
+                removeItemForSelectedList(t)
+            }
+            // 刷新UI
+            notifyPos.forEach { adapter.notifyItemChanged(it) }
+        } else {
+            // 找到本组的头部，如果是选中，就置为未选中
+            val header = adapter.data.findHeaderItem(t)
+            if (header != null && header.isSelected) {
+                removeItemForSelectedList(header)
+                adapter.notifyItemChanged(adapter.data.indexOf(header))
+            }
         }
     }
 

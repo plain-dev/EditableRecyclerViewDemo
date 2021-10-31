@@ -62,4 +62,9 @@ class GroupSectionEditableAdapter :
         return holder.getViewOrNull(R.id.line)
     }
 
+    override fun setList(list: Collection<GroupData>?) {
+        super.setList(list)
+        editModeHandle.setList(list)
+    }
+
 }
