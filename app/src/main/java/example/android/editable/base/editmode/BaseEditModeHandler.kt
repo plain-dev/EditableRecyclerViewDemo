@@ -396,8 +396,8 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
                     selectedList.remove(index)
                     selectedList[0] = item
                 }
-                // TODO 暂时刷新所有 (可优化)
-                adapter.notifyDataSetChanged()
+                adapter.notifyItemChanged(index)
+                adapter.notifyItemChanged(0)
             }
         }
 
@@ -479,11 +479,11 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     }
 
     /**
-     * 联动分组条目选中
+     * 联动分组条目选中 (仅多选)
      */
     private fun linkageGroupItemSelected(t: T) {
         // 不适用于单选模式
-        if (currentMode == SELECT_TYPE_SINGLE) return
+        if (getSelectType() == SELECT_TYPE_SINGLE) return
         // 如果点击的是父项
         if (t.isHeader) {
             val notifyPos = mutableListOf<Int>()
@@ -517,11 +517,11 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     }
 
     /**
-     * 联动分组条目未选中
+     * 联动分组条目未选中 (仅多选)
      */
     private fun linkageGroupItemUnselected(t: T) {
         // 不适用于单选模式
-        if (currentMode == SELECT_TYPE_SINGLE) return
+        if (getSelectType() == SELECT_TYPE_SINGLE) return
         if (t.isHeader) {
             val notifyPos = mutableListOf<Int>()
             val selectedChildList = adapter.data.filter {

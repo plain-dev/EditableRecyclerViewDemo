@@ -43,7 +43,6 @@ class GroupEditableActivity : AppCompatActivity() {
 
     private fun initList() {
         rvList?.apply {
-            (itemAnimator as DefaultItemAnimator).supportsChangeAnimations = false
             layoutManager = LinearLayoutManager(context)
             adapter = groupSectionEditableAdapter
         }
