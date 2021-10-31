@@ -23,7 +23,7 @@ class GroupSectionEditableAdapter :
     val editModeHandle = object :
         BaseEditModeHandler<GroupData, GroupSectionEditableViewHolder>(this@GroupSectionEditableAdapter) {
 
-        override fun getCheckBox(helper: GroupSectionEditableViewHolder): CheckBox? {
+        override fun getCompoundButton(helper: GroupSectionEditableViewHolder): CheckBox? {
             return helper.getViewOrNull(R.id.check)
         }
 

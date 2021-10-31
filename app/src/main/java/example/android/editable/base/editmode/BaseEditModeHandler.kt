@@ -4,7 +4,6 @@ package example.android.editable.base.editmode
 
 import android.util.Log
 import android.view.View
-import android.widget.CheckBox
 import android.widget.CompoundButton
 import androidx.recyclerview.widget.RecyclerView
 import com.chad.library.adapter.base.BaseQuickAdapter
@@ -18,12 +17,12 @@ import example.android.editable.ktx.swap
 /**
  * # 列表编辑模式处理器
  *
- * > 在 [BaseQuickAdapter] 及其子类中实例化此类，传入 [adapter] 对象
+ * > 在 [BaseQuickAdapter] 及其子类中实例化此类，传入 [adapter] 对象，在适配器 `convert` 中调用 [convert] 方法
  *
  * ## 外部监听 & 联动
  *
  * - [editSelectedListener] 设置监听方法
- * - [bindExternalCheckBox] 联动外部全选按钮
+ * - [bindExternalCompoundButton] 联动外部全选按钮
  *
  * ## 切换模式 [changeMode]
  *
@@ -34,7 +33,7 @@ import example.android.editable.ktx.swap
  *
  * ## 获取视图
  *
- * - 获取复选按钮 [getCheckBox] 视图 (必须)
+ * - 获取复选按钮 [getCompoundButton] 视图 (必须)
  * - 获取隐藏区域 [getHideView] 视图 (可选，仅在 [onlyEditMode] 设为 `false` 时有效)
  *
  * ## 获取选择模式 [getSelectMode]
@@ -73,8 +72,8 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
 
         const val SHOW_MODE = 0x101 // 展示模式
         const val EDIT_MODE = 0x202 // 编辑模式
-        const val SELECT_MODE_PARENT = 0x201 // 选择模式 - 整个item
-        const val SELECT_MODE_CHILD = 0x202 // 选择模式 - 仅CheckBox
+        const val SELECT_MODE_PARENT = 0x201 // 选择模式 - 整个 item
+        const val SELECT_MODE_CHILD = 0x202 // 选择模式 - 仅 CompoundButton
         const val SELECT_TYPE_MULTI = 0x301 // 选择类型 - 多选
         const val SELECT_TYPE_SINGLE = 0x302 // 选择类型 - 单选
 
@@ -91,7 +90,7 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
 
     private val selectedList = mutableMapOf<Int, SectionSelectEntity>()
 
-    private var externalCheckBox: CheckBox? = null
+    private var externalCompoundButton: CompoundButton? = null
 
     private val isSingleSelectType: Boolean
         get() = getSelectType() == SELECT_TYPE_SINGLE
@@ -119,16 +118,16 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
         }
     }
 
-    // ====================== Override local =========================//
+    //<editor-fold name="Override local">
 
     fun setList(list: Collection<T>?) {
         initialSelectedList(list)
         editSelectedListener?.onSelectedItem(getSelectedList(), getSelectedItemCount())
-        externalCheckBox?.isChecked = false
+        externalCompoundButton?.isChecked = false
     }
 
     fun addData(newData: Collection<T>) {
-        externalCheckBox?.isChecked = false
+        externalCompoundButton?.isChecked = false
     }
 
     fun removeAt(position: Int) {
@@ -139,18 +138,20 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
         selectedList.remove(adapter.data.indexOf(data))
     }
 
+    //</editor-fold>
+
     fun convert(holder: VH, item: T) {
         // 处理编辑模式的核心方法
         editKernel(holder, item)
     }
 
     /**
-     * 获取指定的复选框
+     * 获取指定的复合按钮
      *
      * @param helper [BaseViewHolder]
-     * @return [CheckBox]复选框
+     * @return [CompoundButton] 复合按钮
      */
-    abstract fun getCheckBox(helper: VH): CheckBox?
+    abstract fun getCompoundButton(helper: VH): CompoundButton?
 
     /**
      * 获取当切换显示模式 [SHOW_MODE]和 编辑模式 [EDIT_MODE] 时, 需要隐藏的View
@@ -274,18 +275,18 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
      */
     private fun selectModeParentKernel(vh: VH, t: T) {
         val itemView: View = vh.itemView
-        val checkBox = getCheckBox(vh)
-        if (checkBox != null) {
-            checkBox.isClickable = false
-            checkBox.isChecked = t.isSelected
+        val buttonView =
+            getCompoundButton(vh) ?: throw IllegalArgumentException("未指定 CompoundButton !!!")
+        buttonView.isClickable = false
+        buttonView.isChecked = t.isSelected
+        if (currentMode == EDIT_MODE) {
             // 缓存在 `SHOW_MODE` 时设置的 `OnItemClickListener`, 切换回去后进行还原
             oldItemClickListener = adapter.getOnItemClickListener()
             itemView.setOnClickListener {
-                val selected = !t.isSelected
-                if (isSingleSelectType && selected) return@setOnClickListener
-                checkBox.isChecked = selected
-                processSelected(t, selected)
-                callBackSelectedCount()
+                val isSelected = !t.isSelected
+                buttonView.isChecked = isSelected
+                // 开始处理选择逻辑
+                handleSingleOrMultiSelect(t, isSelected, buttonView)
             }
         }
     }
@@ -294,50 +295,83 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
      * 选择模式[SELECT_MODE_CHILD]核心
      */
     private fun selectModeChildKernel(vh: VH, t: T) {
-        val checkBox = getCheckBox(vh) ?: throw IllegalArgumentException("未指定CheckBox!!!")
-        checkBox.isClickable = true
-        checkBox.isChecked = t.isSelected
+        val buttonView =
+            getCompoundButton(vh) ?: throw IllegalArgumentException("未指定 CompoundButton !!!")
+        buttonView.isClickable = true
+        buttonView.isChecked = t.isSelected
         if (currentMode == EDIT_MODE) {
-            checkBox.setOnCheckedChangeListener { buttonView: CompoundButton, isChecked: Boolean ->
+            buttonView.setOnCheckedChangeListener { buttonView: CompoundButton, isChecked: Boolean ->
                 if (!buttonView.isPressed) return@setOnCheckedChangeListener //过滤非人为点击
-
-                val index = adapter.data.indexOf(t)
-
-                if (isSingleSelectType // 单选模式时
-                    && !isChecked // 取消选中当前项
-                    && isSelectLeastOne() // 如果指定最低选择一项
-                    && selectedList.size == 1 // 已选择列表中仅一项
-                    && selectedList[index] == t // 且为当前选择项
-                ) {
-                    buttonView.isChecked = true // 则不允许取消选中
-                    return@setOnCheckedChangeListener
-                }
-                if (isSingleSelectType) {
-                    if (isChecked) { // true
-                        handleSingleSelected(buttonView, t, index)
-                    } else { // false
-                        handleSingleUnselected(buttonView, t, index)
-                    }
-                } else {
-                    processSelected(t, isChecked)
-                    callBackSelectedCount()
-                }
+                // 开始处理选择逻辑
+                handleSingleOrMultiSelect(t, isChecked, buttonView)
             }
         }
     }
 
     /**
-     * 处理单选选中
+     * 处理单选或多选逻辑 (开始)
+     */
+    private fun handleSingleOrMultiSelect(t: T, isSelected: Boolean, buttonView: CompoundButton) {
+        val index = adapter.data.indexOf(t)
+
+        if (checkSingleSelectedOnlyOne(t, isSelected, index)) {
+            buttonView.isChecked = true // 不允许取消选中
+            return
+        }
+
+        if (isSingleSelectType) {
+            handleSingleSelect(buttonView, t, index, isSelected)
+        } else {
+            processSelected(t, isSelected)
+            callBackSelectedCount()
+        }
+    }
+
+    //<editor-fold name="单选逻辑">
+
+    /**
+     * 单选模式：检查是否仅选择一项
+     */
+    private fun checkSingleSelectedOnlyOne(t: T, isSelected: Boolean, index: Int): Boolean {
+        if (isSingleSelectType // 单选模式时
+            && !isSelected // 取消选中当前项
+            && isSelectLeastOne() // 如果指定最低选择一项
+            && selectedList.size == 1 // 已选择列表中仅一项
+            && selectedList[index] == t // 且为当前选择项
+        ) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * 处理单选 [SELECT_TYPE_SINGLE] 逻辑
+     */
+    private fun handleSingleSelect(
+        buttonView: CompoundButton,
+        t: T,
+        index: Int,
+        isSelected: Boolean
+    ) {
+        if (isSelected) { // 选中
+            handleSingleSelected(buttonView, t, index)
+        } else { // 未选中
+            handleSingleUnselected(buttonView, t, index)
+        }
+    }
+
+    /**
+     * 处理单选 [SELECT_TYPE_SINGLE] 选中逻辑
      */
     private fun handleSingleSelected(
         buttonView: CompoundButton,
         item: T,
-        position: Int
+        index: Int
     ) {
         // 选择操作
         val selectedBlock = {
             processSelected(item, true)
-            val notifyPos = mutableListOf(position)
+            val notifyPos = mutableListOf(index)
             val waitRemoveKeys = mutableListOf<Int>()
             selectedList.forEach {
                 if (it.value != item) {
@@ -356,14 +390,14 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
 
         // 选择项永远处于顶部
         val configBlock = {
-            if (isSelectAlwaysTop() && position != 0) {
-                adapter.data.swap(0, position)
-                if (selectedList.containsKey(position)) {
-                    selectedList.remove(position)
+            if (isSelectAlwaysTop() && index != 0) {
+                adapter.data.swap(0, index)
+                if (selectedList.containsKey(index)) {
+                    selectedList.remove(index)
                     selectedList[0] = item
                 }
-                adapter.notifyItemChanged(0)
-                adapter.notifyItemChanged(position)
+                // TODO 暂时刷新所有 (可优化)
+                adapter.notifyDataSetChanged()
             }
         }
 
@@ -391,19 +425,19 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     }
 
     /**
-     * 处理单选未选中
+     * 处理单选 [SELECT_TYPE_SINGLE] 未选中逻辑
      */
     private fun handleSingleUnselected(
         buttonView: CompoundButton,
         item: T,
-        position: Int
+        index: Int
     ) {
         val unSelectedBlock = {
-            if (selectedList.containsKey(position)) {
-                selectedList.remove(position)
+            if (selectedList.containsKey(index)) {
+                selectedList.remove(index)
             }
             item.isSelected = false
-            adapter.notifyItemChanged(position)
+            adapter.notifyItemChanged(index)
         }
 
         // 失败操作
@@ -423,8 +457,12 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
         }
     }
 
+    //</editor-fold>
+
+    //<editor-fold name="通用选择逻辑">
+
     /**
-     * 选择状态设置
+     * 处理通用选择逻辑
      */
     private fun processSelected(t: T, isSelected: Boolean) {
         if (isSelected) {
@@ -444,6 +482,8 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
      * 联动分组条目选中
      */
     private fun linkageGroupItemSelected(t: T) {
+        // 不适用于单选模式
+        if (currentMode == SELECT_TYPE_SINGLE) return
         // 如果点击的是父项
         if (t.isHeader) {
             val notifyPos = mutableListOf<Int>()
@@ -451,9 +491,9 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
                 it != t && it.groupId == t.groupId && !it.isSelected
             }
             // 将未选中子项加入到选中列表
-            unselectedChildList.forEach { t ->
-                notifyPos.add(adapter.data.indexOf(t))
-                appendItemForSelectedList(t)
+            unselectedChildList.forEach { item ->
+                notifyPos.add(adapter.data.indexOf(item))
+                appendItemForSelectedList(item)
             }
             // 刷新UI
             notifyPos.forEach { adapter.notifyItemChanged(it) }
@@ -480,15 +520,17 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
      * 联动分组条目未选中
      */
     private fun linkageGroupItemUnselected(t: T) {
+        // 不适用于单选模式
+        if (currentMode == SELECT_TYPE_SINGLE) return
         if (t.isHeader) {
             val notifyPos = mutableListOf<Int>()
             val selectedChildList = adapter.data.filter {
                 it != t && it.groupId == t.groupId && it.isSelected
             }
             // 将选中子项加入到未选中列表
-            selectedChildList.forEach { t ->
-                notifyPos.add(adapter.data.indexOf(t))
-                removeItemForSelectedList(t)
+            selectedChildList.forEach { item ->
+                notifyPos.add(adapter.data.indexOf(item))
+                removeItemForSelectedList(item)
             }
             // 刷新UI
             notifyPos.forEach { adapter.notifyItemChanged(it) }
@@ -527,6 +569,8 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
         return false
     }
 
+    //</editor-fold>
+
     /**
      * 变更显示模式
      *
@@ -538,8 +582,8 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
             Log.d(TAG, "[changeMode] 指令无效，该适配器永远处于编辑状态")
             return
         }
-        // 切换到显示模式，外部 `CheckBox` 复原到未选择状态
-        externalCheckBox?.apply {
+        // 切换到显示模式，外部 `CompoundButton` 复原到未选择状态
+        externalCompoundButton?.apply {
             if (mode == SHOW_MODE && isChecked) {
                 isChecked = false
             }
@@ -550,6 +594,32 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
         }
         adapter.notifyDataSetChanged()
     }
+
+    /**
+     * 检查当前是否处于[EDIT_MODE]编辑模式
+     *
+     * true: 编辑模式[EDIT_MODE]
+     * false: 显示模式[SHOW_MODE]
+     */
+    private fun checkEditMode(): Boolean {
+        return currentMode == EDIT_MODE
+    }
+
+    /**
+     * 回调当前选择数量
+     */
+    private fun callBackSelectedCount() {
+        if (null != editSelectedListener) {
+            val count = getSelectedItemCount()
+            // 检查是否选中全部，并联动外部 `CompoundButton` 状态
+            externalCompoundButton?.isChecked = count > 0 && count == adapter.data.size
+            // 排除头部
+            val excludeHeader = getSelectedList().filter { !it.isHeader }
+            editSelectedListener?.onSelectedItem(excludeHeader, excludeHeader.size)
+        }
+    }
+
+    //<editor-fold name="最终处理选择指令的方法">
 
     /**
      * 恢复所有已选择Item[selectedList]为未选择状态
@@ -568,7 +638,7 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     /**
      * 选择全部Item
      */
-    open fun selectedAllItem() {
+    private fun selectedAllItem() {
         if (isSingleSelectType) return
         if (adapter.data.isNotEmpty() && checkEditMode()) {
             for (i in adapter.data.indices) {
@@ -583,7 +653,7 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     /**
      * 取消选择全部Item
      */
-    open fun unSelectedAllItem() {
+    private fun unSelectedAllItem() {
         if (isSingleSelectType) return
         if (adapter.data.isNotEmpty() && checkEditMode()) {
             for (i in adapter.data.indices) {
@@ -613,19 +683,16 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     }
 
     /**
-     * 获取已选择Item[selectedList]的数量
-     */
-    open fun getSelectedItemCount(): Int {
-        return if (selectedList.isNotEmpty() && checkEditMode()) selectedList.size else 0
-    }
-
-    /**
      * 删除Item[BaseQuickAdapter.data]
      */
     private fun removeItem(pos: Int) {
         adapter.notifyItemRemoved(pos)
         adapter.notifyItemRangeChanged(0, adapter.itemCount)
     }
+
+    //</editor-fold>
+
+    //<editor-fold name="获取已选择列表相关方法">
 
     /**
      * 获取是否选择全部数据
@@ -638,30 +705,6 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     }
 
     /**
-     * 回调当前选择数量
-     */
-    private fun callBackSelectedCount() {
-        if (null != editSelectedListener) {
-            val count = getSelectedItemCount()
-            // 检查是否选中全部，并联动外部 `CheckBox` 状态
-            externalCheckBox?.isChecked = count > 0 && count == adapter.data.size
-            // 排除头部
-            val excludeHeader = getSelectedList().filter { !it.isHeader }
-            editSelectedListener?.onSelectedItem(excludeHeader, excludeHeader.size)
-        }
-    }
-
-    /**
-     * 检查当前是否处于[EDIT_MODE]编辑模式
-     *
-     * true: 编辑模式[EDIT_MODE]
-     * false: 显示模式[SHOW_MODE]
-     */
-    private fun checkEditMode(): Boolean {
-        return currentMode == EDIT_MODE
-    }
-
-    /**
      * 获取已选择的Item[selectedList]
      */
     open fun getSelectedList(): List<T> {
@@ -669,27 +712,25 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     }
 
     /**
-     * 获取要删除的Item (外部实现)
-     *
-     * 一般删除item都是需要传给接口id的，可以在适配器中重写此方法，来实现自己的逻辑
-     * 获取以选择的item集合可通过[getSelectedList]获得
-     *
+     * 获取已选择Item[selectedList]的数量
      */
-    open fun getDeleteParams(): String? {
-        return null
+    open fun getSelectedItemCount(): Int {
+        return if (selectedList.isNotEmpty() && checkEditMode()) selectedList.size else 0
     }
 
+    //</editor-fold>
+
     /**
-     * 绑定外部CheckBox[externalCheckBox]，使其跟随列表联动
+     * 绑定外部复合按钮 [externalCompoundButton]，使其跟随列表联动
      */
     @JvmOverloads
-    open fun bindExternalCheckBox(
-        externalCheckBox: CheckBox?,
+    open fun bindExternalCompoundButton(
+        externalCompoundButton: CompoundButton?,
         checkedChangeListener: CompoundButton.OnCheckedChangeListener? = null
     ) {
-        if (null != externalCheckBox) {
-            this.externalCheckBox = externalCheckBox
-            externalCheckBox.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView: CompoundButton, isChecked: Boolean ->
+        if (null != externalCompoundButton) {
+            this.externalCompoundButton = externalCompoundButton
+            externalCompoundButton.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView: CompoundButton, isChecked: Boolean ->
                 checkedChangeListener?.onCheckedChanged(buttonView, isChecked)
                 if (!buttonView.isPressed) return@OnCheckedChangeListener
                 if (getSelectType() != SELECT_TYPE_SINGLE && adapter.data.isNotEmpty()) {

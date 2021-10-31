@@ -14,7 +14,7 @@ object SimpleData {
                 add(
                     GroupData().also { local ->
                         local.groupId = groupId
-                        local.storeName = R.string.store_simple_name.obtainString()
+                        local.storeName = "${R.string.store_simple_name.obtainString()} - $sectionIndex"
                     }
                 )
                 (1..(1..3).random()).forEach { childIndex ->
@@ -27,7 +27,7 @@ object SimpleData {
                                 R.drawable.apple2
                             local.productName = R.string.product_simple_title.obtainString()
                             local.productType = R.string.product_simple_type.obtainString()
-                            local.productPrice = "20499"
+                            local.productPrice = "20499 - $childIndex"
                         }
                     )
                 }

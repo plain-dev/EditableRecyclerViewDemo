@@ -29,7 +29,7 @@ class GroupEditableActivity : AppCompatActivity() {
 
                 }
             }
-            editModeHandle.bindExternalCheckBox(checkAll)
+            editModeHandle.bindExternalCompoundButton(checkAll)
         }
     }
 
