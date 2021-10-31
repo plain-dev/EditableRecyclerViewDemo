@@ -43,6 +43,13 @@ class GroupEditableActivity : AppCompatActivity() {
 
     private fun initList() {
         rvList?.apply {
+            // 踩坑：在某些情况下调用 `notifyItemChanged` 通知刷新两个地方的条目
+            // 出现另外一个条目视图没有变化的问题 (数据状态已经更改了)
+            //    - 如果是多类型条目，不同组之间交换不会出现问题
+            //    - 同组之间则问题出现
+            // 此时调用 `notifyDataSetChanged` 则正常
+            // 去掉这里的关闭刷新动画后，问题消失
+            //(itemAnimator as DefaultItemAnimator).supportsChangeAnimations = false
             layoutManager = LinearLayoutManager(context)
             adapter = groupSectionEditableAdapter
         }
