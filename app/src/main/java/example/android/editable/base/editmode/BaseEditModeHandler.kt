@@ -50,6 +50,7 @@ import example.android.editable.ktx.swap
  *
  * - [onlyEditMode] 是否永远处于编辑模式 (default: false)
  * - [isRestoreUnselectedWhenChangeMode] 是否在 [changeMode] 时将所有「已选择项」置为「未选中」(default: true)
+ * - [isLongClickSelected] 是否长按进入编辑模式
  *
  * ## 仅适用于单选配置项
  *
@@ -68,7 +69,7 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
 
     companion object {
 
-        private const val TAG = "EditModeHandler"
+        private val TAG = this::class.java.simpleName
 
         const val SHOW_MODE = 0x101 // 展示模式
         const val EDIT_MODE = 0x202 // 编辑模式
@@ -126,7 +127,7 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
         externalCompoundButton?.isChecked = false
     }
 
-    fun addData(newData: Collection<T>) {
+    fun addData() {
         externalCompoundButton?.isChecked = false
     }
 
