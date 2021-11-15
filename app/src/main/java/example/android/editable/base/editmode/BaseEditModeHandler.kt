@@ -207,6 +207,14 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
     open fun isSelectAlwaysTop(): Boolean = true
 
     /**
+     * 是否长按选中
+     *
+     * - 当处于 [SHOW_MODE] 时有效
+     *
+     */
+    open fun isLongClickSelected(): Boolean = false
+
+    /**
      * 编辑模式核心
      */
     private fun editKernel(vh: VH, t: T) {
@@ -236,16 +244,17 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
                     )
                 }
             }
-            // 长按item进入编辑模式，进入的操作由外部实现
-            vh.itemView.setOnLongClickListener {
-                // 长按item判断下当前所处模式，如果是编辑模式就不响应
-                if (!checkEditMode() && null != editSelectedListener) {
-                    editSelectedListener?.onLongClickEnterEditMode()
-                    appendItemForSelectedList(t)
-                    callBackSelectedCount()
-                    return@setOnLongClickListener true
+            if (isLongClickSelected()) { // 长按 item 进入编辑模式
+                vh.itemView.setOnLongClickListener {
+                    if (!checkEditMode() && !onlyEditMode()) {
+                        editSelectedListener?.onLongClickEnterEditMode()
+                        changeMode(EDIT_MODE)
+                        appendItemForSelectedList(t)
+                        callBackSelectedCount()
+                        return@setOnLongClickListener true
+                    }
+                    false
                 }
-                false
             }
         }
     }
@@ -722,6 +731,9 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
 
     /**
      * 绑定外部复合按钮 [externalCompoundButton]，使其跟随列表联动
+     *
+     * - 全选/取消全选
+     * - 仅限多选模式 [SELECT_TYPE_MULTI] 使用
      */
     @JvmOverloads
     open fun bindExternalCompoundButton(
@@ -732,8 +744,8 @@ abstract class BaseEditModeHandler<T : SectionSelectEntity, VH : BaseViewHolder>
             this.externalCompoundButton = externalCompoundButton
             externalCompoundButton.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView: CompoundButton, isChecked: Boolean ->
                 checkedChangeListener?.onCheckedChanged(buttonView, isChecked)
-                if (!buttonView.isPressed) return@OnCheckedChangeListener
-                if (getSelectType() != SELECT_TYPE_SINGLE && adapter.data.isNotEmpty()) {
+                if (!buttonView.isPressed) return@OnCheckedChangeListener // Filter non-human clicks
+                if (getSelectType() != SELECT_TYPE_SINGLE && adapter.data.isNotEmpty()) { // Only support multi-select
                     if (!isChecked || isSelectedAllItem()) {
                         unSelectedAllItem() // 取消全选
                     } else {
