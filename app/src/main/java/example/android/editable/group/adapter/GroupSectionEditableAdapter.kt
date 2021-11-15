@@ -35,13 +35,13 @@ class GroupSectionEditableAdapter :
 
     }
 
-    override fun convert(helper: GroupSectionEditableViewHolder, item: GroupData) {
-        super.convert(helper, item)
-        editModeHandle.convert(helper, item)
-        helper.getViewOrNull<ImageView>(R.id.ivCover)?.setImageResource(item.productCover)
-        helper.getViewOrNull<TextView>(R.id.tvProductName)?.text = item.productName
-        helper.getViewOrNull<TextView>(R.id.tvProductType)?.text = item.productType
-        helper.getViewOrNull<TextView>(R.id.tvParentPrice)?.text = "￥${item.productPrice}"
+    override fun convert(holder: GroupSectionEditableViewHolder, item: GroupData) {
+        super.convert(holder, item)
+        editModeHandle.convert(holder, item)
+        holder.getViewOrNull<ImageView>(R.id.ivCover)?.setImageResource(item.productCover)
+        holder.getViewOrNull<TextView>(R.id.tvProductName)?.text = item.productName
+        holder.getViewOrNull<TextView>(R.id.tvProductType)?.text = item.productType
+        holder.getViewOrNull<TextView>(R.id.tvParentPrice)?.text = "￥${item.productPrice}"
     }
 
     override fun convertHeader(helper: GroupSectionEditableViewHolder, item: GroupData) {

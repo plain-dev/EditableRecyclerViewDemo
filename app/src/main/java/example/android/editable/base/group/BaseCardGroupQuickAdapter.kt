@@ -32,8 +32,8 @@ abstract class BaseCardGroupQuickAdapter<T : GroupEntity, VH : BaseViewHolder> @
         handleGroup(helper)
     }
 
-    override fun convert(helper: VH, item: T) {
-        handleGroup(helper)
+    override fun convert(holder: VH, item: T) {
+        handleGroup(holder)
     }
 
     private fun handleGroup(holder: VH) {

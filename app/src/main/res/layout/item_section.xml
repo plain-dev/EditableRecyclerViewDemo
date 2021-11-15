@@ -9,6 +9,7 @@
     android:theme="@style/Theme.MaterialComponents"
     app:cardBackgroundColor="@color/white"
     app:cardElevation="@dimen/cardView_elevation"
+    app:cardCornerRadius="@dimen/cardView_radius"
     app:cardPreventCornerOverlap="false">
 
     <LinearLayout

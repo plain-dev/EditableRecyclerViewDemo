@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="cardView_radius">8dp</dimen>
-    <dimen name="cardView_elevation">2dp</dimen>
+    <dimen name="cardView_radius">4dp</dimen>
+    <dimen name="cardView_elevation">1dp</dimen>
     <dimen name="dp1">1dp</dimen>
     <dimen name="dp2">2dp</dimen>
     <dimen name="dp4">4dp</dimen>

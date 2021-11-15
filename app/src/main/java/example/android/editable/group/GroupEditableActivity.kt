@@ -1,10 +1,10 @@
+@file:Suppress("SetTextI18n")
+
 package example.android.editable.group
 
-import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import example.android.editable.R
 import example.android.editable.base.editmode.IEditSelectedListener
@@ -19,9 +19,8 @@ class GroupEditableActivity : AppCompatActivity() {
     private val groupSectionEditableAdapter by lazy {
         GroupSectionEditableAdapter().apply {
             editModeHandle.editSelectedListener = object : IEditSelectedListener<GroupData> {
-                @SuppressLint("SetTextI18n")
                 override fun onSelectedItem(selectedList: List<GroupData>, count: Int) {
-                    Log.e("LocalTest", "[onSelectedItem] ==>> ${selectedList.size}")
+                    Log.e("Editable", "[onSelectedItem] -> ${selectedList.size}")
                     tvTotalCount?.text = R.string.items_selected.obtainString(count)
                 }
 
